@@ -35,10 +35,18 @@ class KitController extends Controller
         return redirect()->route('kits.show', $kit)->with('ok','Kit criado.');
     }
 
-    public function show(Kit $kit) {
-        $kit->load(['instances' => fn($q) => $q->orderByDesc('created_at')]);
+    // public function show(Kit $kit) {
+    //     $kit->load(['instances' => fn($q) => $q->orderByDesc('created_at')]);
+    //     return view('cme.kits.show', compact('kit'));
+    // }
+
+    public function show(Kit $kit)
+    {
+        $kit->load(['instances', 'instances.eventos.user', 'items']);
+
         return view('cme.kits.show', compact('kit'));
     }
+
 
     public function edit(Kit $kit) {
         return view('cme.kits.edit', compact('kit'));

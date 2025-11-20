@@ -12,18 +12,15 @@ class Kit extends Model
         return $this->hasMany(\App\Models\KitInstance::class);
     }
 
+    public function items()
+    {
+        return $this->hasMany(KitItem::class)->orderBy('nome');
+    }
+
     public function getTemInstanciaNaoDevolvidaAttribute(): bool
     {
-        if (array_key_exists('tem_instancia_nao_devolvida', $this->attributes)) {
-            return (bool) $this->attributes['tem_instancia_nao_devolvida'];
-        }
-
         return $this->instances()
-            ->where('status', '!=', 'devolvido')
+            ->whereNotIn('status', ['em_estoque'])
             ->exists();
     }
 }
-
-
-
-

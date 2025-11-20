@@ -25,9 +25,13 @@ class OrderController extends Controller
 
     public function create()
     {
-        $kits = Kit::orderBy('nome')->get(['id','nome']);
+        $kits = Kit::with('items')
+            ->orderBy('nome')
+            ->get();
+
         return view('orders.create', compact('kits'));
     }
+
 
     public function store(Request $request)
     {

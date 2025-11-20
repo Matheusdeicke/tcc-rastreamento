@@ -11,6 +11,11 @@
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
         <h3 class="text-2xl font-bold text-brand-800">{{ $kit->nome }}</h3>
         <div class="flex flex-wrap gap-2">
+            <button type="button"
+                    onclick="openAddItemsModal()"
+                    class="inline-flex items-center px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold">
+                + Adicionar peças
+            </button>
             <a href="{{ route('kits.edit',$kit) }}"
                class="inline-flex items-center px-3 py-2 rounded-lg border border-brand-700 text-brand-700 hover:bg-brand-700 hover:text-white text-sm font-semibold">
                 Editar
@@ -27,6 +32,59 @@
     </div>
 
     <p class="text-sm text-gray-600">{{ $kit->descricao ?: '—' }}</p>
+
+    {{-- Composição do kit --}}
+    <h5 class="text-lg font-semibold text-brand-800 mt-6 mb-2">Composição do kit</h5>
+    <div class="bg-white rounded-xl shadow-soft ring-1 ring-black/5 overflow-hidden">
+        <div class="overflow-x-auto">
+            @if($kit->items->isEmpty())
+                <div class="px-4 py-6 text-center text-gray-500 text-sm">
+                    Nenhuma peça cadastrada para este kit. Clique em "Adicionar peças" para começar.
+                </div>
+            @else
+                <table class="min-w-full divide-y divide-gray-200 text-sm">
+                    <thead class="bg-gray-50">
+                        <tr class="text-left font-semibold text-brand-800">
+                            <th class="px-4 py-3">Peça</th>
+                            <th class="px-4 py-3">Código</th>
+                            <th class="px-4 py-3 text-center">Qtd.</th>
+                            <th class="px-4 py-3">Observações</th>
+                            <th class="px-4 py-3 text-right">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        @foreach($kit->items as $item)
+                            <tr class="hover:bg-gray-50/60">
+                                <td class="px-4 py-3 font-medium text-gray-800">{{ $item->nome }}</td>
+                                <td class="px-4 py-3 text-gray-700">{{ $item->codigo ?: '—' }}</td>
+                                <td class="px-4 py-3 text-center">{{ $item->quantidade }}</td>
+                                <td class="px-4 py-3 text-gray-600">{{ $item->observacoes ?: '—' }}</td>
+                                <td class="px-4 py-3">
+                                    <div class="flex gap-2 justify-end">
+                                        <a href="{{ route('kits.items.edit', [$kit, $item]) }}"
+                                           class="inline-flex items-center px-3 py-1.5 rounded-lg border border-brand-700 text-brand-700 hover:bg-brand-700 hover:text-white text-xs font-semibold">
+                                            Editar
+                                        </a>
+                                        <form method="POST"
+                                              action="{{ route('kits.items.destroy', [$kit, $item]) }}"
+                                              onsubmit="return confirm('Remover esta peça do kit?');"
+                                              class="inline">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button
+                                                class="inline-flex items-center px-3 py-1.5 rounded-lg border border-rose-600 text-rose-600 hover:bg-rose-600 hover:text-white text-xs font-semibold">
+                                                Excluir
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            @endif
+        </div>
+    </div>
 
     {{-- Instâncias --}}
     <h5 class="text-lg font-semibold text-brand-800 mt-6 mb-2">Instâncias</h5>
@@ -91,7 +149,6 @@
         </div>
     </div>
 
-    {{-- Histórico de eventos (todas as instâncias) --}}
     <h5 class="text-lg font-semibold text-brand-800 mt-6 mb-2">Histórico de eventos</h5>
     <div class="bg-white rounded-xl shadow-soft ring-1 ring-black/5 overflow-hidden">
         <div class="overflow-x-auto">
@@ -106,25 +163,28 @@
                     </tr>
                 </thead>
                 @php
-                $eventos = $kit->instances->load('eventos.user')->flatMap->eventos->sortByDesc('created_at');
+                    $eventos = $kit->instances->load('eventos.user')->flatMap->eventos->sortByDesc('created_at');
                 @endphp
 
                 <tbody class="divide-y divide-gray-100">
-                @forelse($eventos as $ev)
-                    <tr class="hover:bg-gray-50/60">
-                    <td class="px-4 py-3">{{ $ev->created_at?->format('d/m/Y H:i') ?? '—' }}</td>
-                    <td class="px-4 py-3 font-medium text-gray-800">{{ $ev->etapa }}</td>
-                    <td class="px-4 py-3">{{ $ev->local ?? '—' }}</td>
-                    <td class="px-4 py-3 text-gray-600">{{ $ev->observacoes ?? '—' }}</td>
-                    <td class="px-4 py-3">{{ $ev->user?->name ?? '—' }}</td>
-                    </tr>
-                @empty
-                    <tr><td colspan="5" class="px-4 py-8 text-center text-gray-500">Sem eventos registrados.</td></tr>
-                @endforelse
+                    @forelse($eventos as $ev)
+                        <tr class="hover:bg-gray-50/60">
+                            <td class="px-4 py-3">{{ $ev->created_at?->format('d/m/Y H:i') ?? '—' }}</td>
+                            <td class="px-4 py-3 font-medium text-gray-800">{{ $ev->etapa }}</td>
+                            <td class="px-4 py-3">{{ $ev->local ?? '—' }}</td>
+                            <td class="px-4 py-3 text-gray-600">{{ $ev->observacoes ?? '—' }}</td>
+                            <td class="px-4 py-3">{{ $ev->user?->name ?? '—' }}</td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="5" class="px-4 py-8 text-center text-gray-500">Sem eventos registrados.</td>
+                        </tr>
+                    @endforelse
                 </tbody>
-
             </table>
         </div>
     </div>
 </div>
+
+@include('cme.kits.partials.add-items-modal')
 @endsection

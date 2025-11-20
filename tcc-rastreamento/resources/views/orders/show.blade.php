@@ -73,6 +73,21 @@
     $eventos = $inst?->eventos ?? collect();
   @endphp
 
+  @php
+  $podeDevolver = $inst && $order->status === 'entregue';
+  @endphp
+
+  @if($podeDevolver && auth()->user()->hasRole('enfermagem'))
+    <div class="mt-4 mb-4">
+      <a href="{{ route('returns.create', ['etiqueta' => $inst->etiqueta]) }}"
+        class="inline-flex items-center px-4 py-2 rounded-xl bg-brand-accent text-brand-900 font-semibold hover:bg-brand-accentLight transition"
+        title="Registrar devolução deste kit">
+        Devolver material ({{ $inst->etiqueta }})
+      </a>
+    </div>
+  @endif
+
+
   @if($inst)
     <div class="bg-white rounded-2xl shadow-soft p-6 ring-1 ring-black/5">
       <h5 class="text-brand-800 font-semibold mb-3">Rastreabilidade do kit ({{ $inst->etiqueta }})</h5>

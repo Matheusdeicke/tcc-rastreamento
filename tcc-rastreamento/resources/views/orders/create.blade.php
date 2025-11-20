@@ -19,19 +19,37 @@
       <label class="block text-sm font-medium text-brand-800 mb-1">
         Material desejado (opcional)
       </label>
-      <select name="requested_kit_id"
-              class="w-full rounded-lg border-gray-300 focus:border-brand-accent focus:ring-brand-accent text-sm">
-        <option value="">— Não especificar —</option>
-        @foreach($kits as $kit)
-          <option value="{{ $kit->id }}" @selected(old('requested_kit_id')==$kit->id)>
-            {{ $kit->nome }}
-          </option>
-        @endforeach
-      </select>
+
+      <div class="flex gap-2 items-center">
+        <select id="kit_id"
+                name="requested_kit_id"
+                class="flex-1 rounded-lg border-gray-300 focus:border-brand-accent focus:ring-brand-accent text-sm">
+          <option value="">— Não especificar —</option>
+          @foreach($kits as $kit)
+            <option
+              value="{{ $kit->id }}"
+              @selected(old('requested_kit_id')==$kit->id)
+              data-nome="{{ $kit->nome }}"
+              data-items='@json($kit->items)'
+            >
+              {{ $kit->nome }}
+            </option>
+          @endforeach
+        </select>
+        <button type="button"
+                id="btnVerPecas"
+                onclick="openKitItemsModal()"
+                class="px-3 py-2 rounded-lg border border-brand-700 text-brand-700 text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed"
+                disabled>
+          Ver peças
+        </button>
+      </div>
+
       @error('requested_kit_id')
         <p class="text-sm text-rose-700 mt-1">{{ $message }}</p>
       @enderror
     </div>
+
 
     {{-- Data e hora --}}
     <div>
@@ -85,4 +103,7 @@
     </div>
   </form>
 </div>
+
+@include('orders.partials.kit-items-modal')
 @endsection
+

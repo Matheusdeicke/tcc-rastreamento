@@ -12,7 +12,7 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
       <div class="flex items-center gap-3">
         <a href="{{ url('/') }}" class="flex items-center gap-2">
-          <!-- Ícone simples -->
+          <!-- Ícone -->
           <svg class="w-8 h-8 text-brand-accent" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
             <path d="M4 4h16v16H4z" fill="#003566" />
             <path d="M7 13l3 3 7-7" stroke="#ffc300" stroke-width="2" fill="none" />
@@ -26,21 +26,37 @@
             {{-- ENFERMAGEM --}}
             @role('enfermagem')
               <a href="{{ route('orders.index') }}"
-                 class="px-3 py-2 rounded-lg border border-white/30 hover:bg-white/10 text-sm">Meus pedidos</a>
+                class="px-3 py-2 rounded-lg border border-white/30 hover:bg-white/10 text-sm">
+                Meus pedidos
+              </a>
+
+              <a href="{{ route('returns.index') }}"
+                class="px-3 py-2 rounded-lg border border-white/30 hover:bg-white/10 text-sm">
+                Devoluções
+              </a>
+
               <a href="{{ route('orders.create') }}"
-                 class="px-3 py-2 rounded-lg bg-brand-accent hover:bg-brand-accentLight text-brand-900 text-sm font-semibold">
-                 Solicitar kit
+                class="px-3 py-2 rounded-lg bg-brand-accent hover:bg-brand-accentLight text-brand-900 text-sm font-semibold">
+                Solicitar kit
               </a>
             @endrole
 
             {{-- CME / ADMIN --}}
             @role('cme|admin')
               <a href="{{ route('cme.orders') }}"
-                 class="px-3 py-2 rounded-lg bg-brand-700 hover:bg-brand-700/90 text-white text-sm font-semibold">
-                 CME – Pedidos
+                class="px-3 py-2 rounded-lg bg-brand-700 hover:bg-brand-700/90 text-white text-sm font-semibold">
+                CME – Pedidos
               </a>
+
+              <a href="{{ route('cme.returns') }}"
+                class="px-3 py-2 rounded-lg border border-white/30 hover:bg-white/10 text-sm">
+                Devoluções
+              </a>
+
               <a href="{{ route('kits.index') }}"
-                 class="px-3 py-2 rounded-lg border border-white/30 hover:bg-white/10 text-sm">Estoque de Kits</a>
+                class="px-3 py-2 rounded-lg border border-white/30 hover:bg-white/10 text-sm">
+                Estoque de Kits
+              </a>
             @endrole
           </div>
         @endauth
@@ -75,20 +91,39 @@
 
         {{-- ENFERMAGEM --}}
         @role('enfermagem')
-          <a href="{{ route('orders.index') }}" class="px-3 py-2 rounded-lg hover:bg-white/10 text-sm">Meus pedidos</a>
-          <a href="{{ route('orders.create') }}" class="px-3 py-2 rounded-lg bg-brand-accent hover:bg-brand-accentLight text-brand-900 text-sm font-semibold">
+          <a href="{{ route('orders.index') }}"
+            class="px-3 py-2 rounded-lg hover:bg-white/10 text-sm">
+            Meus pedidos
+          </a>
+
+          <a href="{{ route('returns.index') }}"
+            class="px-3 py-2 rounded-lg hover:bg-white/10 text-sm">
+            Devoluções
+          </a>
+
+          <a href="{{ route('orders.create') }}"
+            class="px-3 py-2 rounded-lg bg-brand-accent hover:bg-brand-accentLight text-brand-900 text-sm font-semibold">
             Solicitar kit
           </a>
         @endrole
 
         {{-- CME / ADMIN --}}
         @role('cme|admin')
-          <a href="{{ route('cme.orders') }}" class="px-3 py-2 rounded-lg bg-brand-700 hover:bg-brand-700/90 text-white text-sm font-semibold">
+          <a href="{{ route('cme.orders') }}"
+            class="px-3 py-2 rounded-lg bg-brand-700 hover:bg-brand-700/90 text-white text-sm font-semibold">
             CME – Pedidos
           </a>
-          <a href="{{ route('kits.index') }}" class="px-3 py-2 rounded-lg hover:bg-white/10 text-sm">Estoque de Kits</a>
-        @endrole
 
+          <a href="{{ route('cme.returns') }}"
+            class="px-3 py-2 rounded-lg hover:bg-white/10 text-sm">
+            Devoluções
+          </a>
+
+          <a href="{{ route('kits.index') }}"
+            class="px-3 py-2 rounded-lg hover:bg-white/10 text-sm">
+            Estoque de Kits
+          </a>
+        @endrole
         <form method="POST" action="{{ route('logout') }}" class="pt-2">@csrf
           <button class="w-full text-left px-3 py-2 rounded-lg border border-white/30 hover:bg-white/10 text-sm">Sair</button>
         </form>
