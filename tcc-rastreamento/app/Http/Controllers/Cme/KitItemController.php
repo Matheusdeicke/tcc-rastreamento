@@ -12,20 +12,30 @@ class KitItemController extends Controller
     public function storeMany(Request $request, Kit $kit)
     {
         $data = $request->validate([
-            'items' => ['required', 'array'],
-            'items.*.nome' => ['required', 'string', 'max:255'],
-            'items.*.codigo' => ['nullable', 'string', 'max:255'],
-            'items.*.quantidade' => ['required', 'integer', 'min:1'],
-            'items.*.observacoes' => ['nullable', 'string', 'max:255'],
+            'items'                => ['required', 'array'],
+            'items.*.nome'         => ['nullable', 'string', 'max:255'],
+            'items.*.codigo'       => ['nullable', 'string', 'max:255'],
+            'items.*.quantidade'   => ['nullable', 'integer', 'min:1'],
+            'items.*.observacoes'  => ['nullable', 'string', 'max:255'],
         ]);
 
-        foreach ($data['items'] as $itemData) {
-            // ignora linhas totalmente vazias
-            if (empty($itemData['nome'])) {
-                continue;
-            }
+        $items = collect($data['items'])->filter(function ($item) {
+            return !empty($item['nome']);
+        });
 
-            $kit->items()->create($itemData);
+        if ($items->isEmpty()) {
+            return back()
+                ->withErrors(['items' => 'Informe pelo menos uma peça para adicionar ao kit.'])
+                ->withInput();
+        }
+
+        foreach ($items as $itemData) {
+            $kit->items()->create([
+                'nome'        => $itemData['nome'],
+                'codigo'      => $itemData['codigo'] ?? null,
+                'quantidade'  => $itemData['quantidade'] ?? 1,
+                'observacoes' => $itemData['observacoes'] ?? null,
+            ]);
         }
 
         return redirect()
@@ -35,11 +45,10 @@ class KitItemController extends Controller
 
     public function edit(Kit $kit, KitItem $item)
     {
-        // garantir que a peça pertence ao kit
         abort_if($item->kit_id !== $kit->id, 404);
 
         return view('cme.kits.items.edit', [
-            'kit' => $kit,
+            'kit'  => $kit,
             'item' => $item,
         ]);
     }
@@ -49,9 +58,9 @@ class KitItemController extends Controller
         abort_if($item->kit_id !== $kit->id, 404);
 
         $data = $request->validate([
-            'nome' => ['required', 'string', 'max:255'],
-            'codigo' => ['nullable', 'string', 'max:255'],
-            'quantidade' => ['required', 'integer', 'min:1'],
+            'nome'        => ['required', 'string', 'max:255'],
+            'codigo'      => ['nullable', 'string', 'max:255'],
+            'quantidade'  => ['required', 'integer', 'min:1'],
             'observacoes' => ['nullable', 'string', 'max:255'],
         ]);
 

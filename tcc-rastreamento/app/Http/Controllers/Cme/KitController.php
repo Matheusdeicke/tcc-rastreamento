@@ -11,10 +11,18 @@ use Illuminate\Http\Request;
 
 class KitController extends Controller
 {
-    public function index() {
+    public function index()
+    {
         $kits = Kit::query()
             ->withExists(['instances as tem_instancia_nao_devolvida' => function ($q) {
-                $q->where('status', '!=', 'devolvido');
+                $q->whereIn('status', [
+                    'em_uso',
+                    'enviado',
+                    'em_preparo',
+                    'em_lavagem',
+                    'quarentena',
+                    'contaminado',
+                ]);
             }])
             ->latest()
             ->paginate(12);
@@ -22,23 +30,24 @@ class KitController extends Controller
         return view('cme.kits.index', compact('kits'));
     }
 
-    public function create() {
+    public function create()
+    {
         return view('cme.kits.create');
     }
 
-    public function store(Request $r) {
+    public function store(Request $r)
+    {
         $data = $r->validate([
-            'nome' => 'required|string|max:120|unique:kits,nome',
+            'nome'      => 'required|string|max:120|unique:kits,nome',
             'descricao' => 'nullable|string|max:2000',
         ]);
-        $kit = Kit::create($data);
-        return redirect()->route('kits.show', $kit)->with('ok','Kit criado.');
-    }
 
-    // public function show(Kit $kit) {
-    //     $kit->load(['instances' => fn($q) => $q->orderByDesc('created_at')]);
-    //     return view('cme.kits.show', compact('kit'));
-    // }
+        $kit = Kit::create($data);
+
+        return redirect()
+            ->route('kits.show', $kit)
+            ->with('ok', 'Kit criado.');
+    }
 
     public function show(Kit $kit)
     {
@@ -47,39 +56,62 @@ class KitController extends Controller
         return view('cme.kits.show', compact('kit'));
     }
 
-
-    public function edit(Kit $kit) {
+    public function edit(Kit $kit)
+    {
         return view('cme.kits.edit', compact('kit'));
     }
 
-    public function update(Request $r, Kit $kit) {
+    public function update(Request $r, Kit $kit)
+    {
         $data = $r->validate([
-            'nome' => 'required|string|max:120|unique:kits,nome,'.$kit->id,
+            'nome'      => 'required|string|max:120|unique:kits,nome,' . $kit->id,
             'descricao' => 'nullable|string|max:2000',
         ]);
+
         $kit->update($data);
-        return redirect()->route('kits.show',$kit)->with('ok','Kit atualizado.');
+
+        return redirect()
+            ->route('kits.show', $kit)
+            ->with('ok', 'Kit atualizado.');
     }
 
     public function destroy(Kit $kit)
     {
         $kit->load('instances:id,kit_id,status');
 
-        $temNaoDevolvida = KitInstance::where('kit_id', $kit->id)
-            ->where('status', '!=', 'devolvido')
+        $statusBloqueio = [
+            'em_uso',
+            'enviado',
+            'em_preparo',
+            'em_lavagem',
+            'quarentena',
+            'contaminado',
+        ];
+
+        $temNaoDevolvida = $kit->instances()
+            ->whereIn('status', $statusBloqueio)
             ->exists();
 
         if ($temNaoDevolvida) {
-            return back()->with('erro', 'Este kit possui instâncias não devolvidas. Devolva todas antes de excluir.');
+            return back()->with(
+                'erro',
+                'Este kit possui instâncias não devolvidas (em uso, envio ou reprocesso). Devolva/conclua todas antes de excluir.'
+            );
         }
 
         $instanciaIds = $kit->instances->pluck('id');
-        $temAlocacaoAtiva = OrderAllocation::whereIn('kit_instance_id', $instanciaIds)
-            ->whereNull('deallocated_at')
-            ->exists();
 
-        if ($temAlocacaoAtiva) {
-            return back()->with('erro', 'Há alocações ativas para instâncias deste kit. Finalize-as antes de excluir.');
+        if ($instanciaIds->isNotEmpty()) {
+            $temAlocacaoAtiva = OrderAllocation::whereIn('kit_instance_id', $instanciaIds)
+                ->whereNull('released_at') // 👈 aqui é released_at
+                ->exists();
+
+            if ($temAlocacaoAtiva) {
+                return back()->with(
+                    'erro',
+                    'Há alocações ativas para instâncias deste kit. Finalize-as antes de excluir.'
+                );
+            }
         }
 
         DB::transaction(function () use ($kit) {
@@ -87,6 +119,35 @@ class KitController extends Controller
             $kit->delete();
         });
 
-        return redirect()->route('kits.index')->with('ok', 'Kit excluído com sucesso.');
+        return redirect()
+            ->route('kits.index')
+            ->with('ok', 'Kit excluído com sucesso.');
+    }
+
+    public function storeInstances(Request $request, Kit $kit)
+    {
+        $data = $request->validate([
+            'quantity' => ['required', 'integer', 'min:1', 'max:50'],
+        ], [
+            'quantity.required' => 'Informe a quantidade de instâncias.',
+            'quantity.integer'  => 'A quantidade deve ser um número inteiro.',
+            'quantity.min'      => 'Informe pelo menos 1 instância.',
+            'quantity.max'      => 'Por segurança, crie no máximo 50 de uma vez.',
+        ]);
+
+        $existingCount = $kit->instances()->count();
+
+        DB::transaction(function () use ($kit, $data, $existingCount) {
+            for ($i = 1; $i <= $data['quantity']; $i++) {
+                $seq = $existingCount + $i;
+
+                $kit->instances()->create([
+                    'etiqueta' => $kit->nome . ' #' . str_pad($seq, 2, '0', STR_PAD_LEFT),
+                    'status'   => 'em_estoque',
+                ]);
+            }
+        });
+
+        return back()->with('ok', $data['quantity'] . ' instância(s) criada(s) com sucesso.');
     }
 }

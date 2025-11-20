@@ -24,6 +24,12 @@
                class="inline-flex items-center px-3 py-2 rounded-lg bg-brand-accent hover:bg-brand-accentLight text-brand-900 text-sm font-semibold">
                 + Nova instância
             </a>
+
+            <button type="button"
+                    onclick="openBulkInstancesModal()"
+                    class="inline-flex items-center px-3 py-2 rounded-lg bg-brand-accent hover:bg-brand-accentLight text-brand-900 text-sm font-semibold">
+                + Adicionar mais material ao estoque
+            </button>
             <a href="{{ route('kits.index') }}"
                class="inline-flex items-center px-3 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm font-semibold">
                 Voltar
@@ -185,6 +191,65 @@
         </div>
     </div>
 </div>
+
+{{-- Modal para gerar múltiplas instâncias --}}
+<div id="bulkInstancesModal"
+     class="fixed inset-0 z-40 hidden items-center justify-center bg-black/40">
+    <div class="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
+        <div class="flex items-start justify-between gap-3 mb-4">
+            <h4 class="text-lg font-semibold text-brand-800">
+                Gerar múltiplas instâncias
+            </h4>
+            <button type="button"
+                    onclick="closeBulkInstancesModal()"
+                    class="text-gray-400 hover:text-gray-600 text-xl leading-none">
+                &times;
+            </button>
+        </div>
+
+        <form method="POST" action="{{ route('kits.instances.bulk-store', $kit) }}" class="space-y-4">
+            @csrf
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                    Quantidade de caixas físicas
+                </label>
+                <input type="number"
+                       name="quantity"
+                       min="1"
+                       max="50"
+                       value="1"
+                       class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 text-sm">
+                <p class="mt-1 text-xs text-gray-500">
+                    Serão criadas novas instâncias deste kit com status <strong>em estoque</strong>.
+                </p>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-2">
+                <button type="button"
+                        onclick="closeBulkInstancesModal()"
+                        class="inline-flex items-center px-3 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm font-semibold">
+                    Cancelar
+                </button>
+                <button type="submit"
+                        class="inline-flex items-center px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold">
+                    Gerar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openBulkInstancesModal() {
+        const el = document.getElementById('bulkInstancesModal');
+        if (el) el.classList.remove('hidden');
+    }
+    function closeBulkInstancesModal() {
+        const el = document.getElementById('bulkInstancesModal');
+        if (el) el.classList.add('hidden');
+    }
+</script>
 
 @include('cme.kits.partials.add-items-modal')
 @endsection
