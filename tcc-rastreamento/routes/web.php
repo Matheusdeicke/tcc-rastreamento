@@ -58,6 +58,8 @@ Route::middleware(['auth'])->group(function () {
         // Route::post('devolucoes/{returnRequest}/quarentena', [ReturnCmeController::class,'sendToQuarantine'])->name('cme.returns.quarantine');
         Route::post('devolucoes/{returnRequest}/reprocessar', [ReturnCmeController::class,'sendToReprocess'])->name('cme.returns.reprocess');
         Route::post('devolucoes/{returnRequest}/liberar', [ReturnCmeController::class,'releaseToStock'])->name('cme.returns.release');
+        Route::post('devolucoes/{returnRequest}/conferencia-itens', [ReturnCmeController::class,'checkItems'])
+        ->name('cme.returns.check-items');
     });
 });
 

@@ -110,11 +110,12 @@
                     @forelse($kit->instances as $i)
                         @php
                             $badge = match($i->status){
-                                'em_estoque' => 'bg-blue-50 text-blue-800',
+                                'em_estoque'   => 'bg-blue-50 text-blue-800',
                                 'esterilizado' => 'bg-emerald-50 text-emerald-800',
-                                'em_uso' => 'bg-amber-50 text-amber-800',
-                                'contaminado' => 'bg-rose-50 text-rose-800',
-                                default => 'bg-gray-100 text-gray-700'
+                                'em_uso'       => 'bg-amber-50 text-amber-800',
+                                'contaminado'  => 'bg-rose-50 text-rose-800',
+                                'incompleto'   => 'bg-rose-100 text-rose-700',
+                                default        => 'bg-gray-100 text-gray-700'
                             };
                         @endphp
                         <tr class="hover:bg-gray-50/60">
@@ -129,13 +130,13 @@
                             <td class="px-4 py-3">
                                 <div class="flex gap-2 justify-end">
                                     <a class="inline-flex items-center px-3 py-1.5 rounded-lg border border-brand-700 text-brand-700 hover:bg-brand-700 hover:text-white text-xs font-semibold"
-                                       href="{{ route('instances.edit',$i) }}">
+                                    href="{{ route('instances.edit',$i) }}">
                                         Editar
                                     </a>
                                     <form class="inline"
-                                          method="POST"
-                                          action="{{ route('instances.destroy',$i) }}"
-                                          onsubmit="return confirm('Remover esta instância?');">
+                                        method="POST"
+                                        action="{{ route('instances.destroy',$i) }}"
+                                        onsubmit="return confirm('Remover esta instância?');">
                                         @csrf @method('DELETE')
                                         <button
                                             class="inline-flex items-center px-3 py-1.5 rounded-lg border border-rose-600 text-rose-600 hover:bg-rose-600 hover:text-white text-xs font-semibold">

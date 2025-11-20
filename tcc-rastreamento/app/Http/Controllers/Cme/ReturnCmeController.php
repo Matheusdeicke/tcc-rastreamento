@@ -23,7 +23,13 @@ class ReturnCmeController extends Controller
 
     public function show(ReturnRequest $returnRequest)
     {
-        $returnRequest->load(['kitInstance.kit','requester','items']);
+        $returnRequest->load([
+            'kitInstance.kit.items',     // composição do kit
+            'requester',
+            'items.kitItem',             // itens reportados pelo solicitante
+            'checkItems.kitItem',        // conferência da CME (se já houver)
+        ]);
+
         return view('cme.returns.show', compact('returnRequest'));
     }
 
@@ -103,6 +109,32 @@ class ReturnCmeController extends Controller
         return DB::transaction(function () use ($returnRequest) {
             $inst = $returnRequest->kitInstance()->lockForUpdate()->first();
 
+            // Verifica se há pendências na conferência da CME
+            $temPendencia = $returnRequest->checkItems()
+                ->where(function ($q) {
+                    $q->where('missing_qty', '>', 0)
+                      ->orWhereIn('status', ['faltando','danificado']);
+                })
+                ->exists();
+
+            if ($temPendencia) {
+                // Devolução concluída, mas kit INCOMPLETO
+                $returnRequest->update(['status' => 'released']);
+
+                TraceEvent::create([
+                    'kit_instance_id' => $inst->id,
+                    'user_id'         => auth()->id(),
+                    'etapa'           => 'liberado_incompleto',
+                    'local'           => 'CME – Arsenal',
+                    'observacoes'     => 'Devolução concluída; kit liberado com pendências de peças (ver conferência).',
+                ]);
+
+                $inst->update(['status' => 'incompleto']);
+
+                return back()->with('ok','Kit liberado, porém marcado como INCOMPLETO devido a peças faltantes/danificadas.');
+            }
+
+            // Fluxo normal: sem pendências → estoque normal
             $returnRequest->update(['status' => 'released']);
 
             TraceEvent::create([
@@ -110,12 +142,48 @@ class ReturnCmeController extends Controller
                 'user_id'         => auth()->id(),
                 'etapa'           => 'liberado',
                 'local'           => 'CME – Arsenal',
-                'observacoes'     => 'Devolução concluída; kit liberado ao estoque',
+                'observacoes'     => 'Devolução concluída; kit liberado ao estoque.',
             ]);
 
             $inst->update(['status' => 'em_estoque']);
 
             return back()->with('ok','Kit liberado para estoque.');
         });
+    }
+
+    // 👇 ESTE É O MÉTODO QUE ESTAVA FALTANDO NO CONTROLLER
+    public function checkItems(Request $request, ReturnRequest $returnRequest)
+    {
+        // CME só pode conferir se já recebeu fisicamente
+        abort_unless(in_array($returnRequest->status, ['received_by_cme','quarantine','reprocessing']), 403);
+
+        $data = $request->validate([
+            'items'                       => ['required', 'array'],
+            'items.*.expected_qty'        => ['required', 'integer', 'min:0'],
+            'items.*.returned_qty'        => ['required', 'integer', 'min:0'],
+            'items.*.status'              => ['required', 'in:ok,faltando,danificado'],
+            'items.*.observacoes'         => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        DB::transaction(function () use ($data, $returnRequest) {
+            foreach ($data['items'] as $kitItemId => $item) {
+                $expected = (int) $item['expected_qty'];
+                $returned = (int) $item['returned_qty'];
+                $missing  = max($expected - $returned, 0);
+
+                $returnRequest->checkItems()->updateOrCreate(
+                    ['kit_item_id' => $kitItemId],
+                    [
+                        'expected_qty' => $expected,
+                        'returned_qty' => $returned,
+                        'missing_qty'  => $missing,
+                        'status'       => $item['status'],
+                        'observacoes'  => $item['observacoes'] ?? null,
+                    ]
+                );
+            }
+        });
+
+        return back()->with('ok', 'Conferência de peças registrada com sucesso.');
     }
 }

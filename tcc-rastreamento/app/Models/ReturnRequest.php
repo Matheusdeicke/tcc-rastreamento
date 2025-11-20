@@ -48,4 +48,10 @@ class ReturnRequest extends Model
             'released'         => 'Liberado ao estoque',
         ][$this->status] ?? $this->status;
     }
+
+    public function checkItems()
+    {
+        return $this->hasMany(ReturnCheckItem::class, 'return_request_id');
+    }
+
 }

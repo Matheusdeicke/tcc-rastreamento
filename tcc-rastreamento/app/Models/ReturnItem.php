@@ -23,4 +23,9 @@ class ReturnItem extends Model
     {
         return $this->belongsTo(ReturnRequest::class, 'return_id');
     }
+
+    public function kitItem()
+    {
+        return $this->belongsTo(KitItem::class, 'kit_item_id');
+    }
 }

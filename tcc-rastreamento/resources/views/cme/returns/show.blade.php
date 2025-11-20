@@ -76,6 +76,87 @@
     @endif
   </div>
 
+  {{-- Conferência de peças pela CME --}}
+  @if($returnRequest->kitInstance->kit?->items && $returnRequest->kitInstance->kit->items->count())
+    <div class="bg-white rounded-2xl shadow-soft ring-1 ring-black/5 overflow-hidden">
+      <div class="p-4 flex items-center justify-between">
+        <div class="font-semibold text-brand-800">Conferência de peças do kit</div>
+        @if(in_array($returnRequest->status, ['received_by_cme','quarantine','reprocessing']))
+          <span class="text-xs text-gray-500">Edite os campos e clique em "Registrar conferência".</span>
+        @else
+          <span class="text-xs text-gray-500">Conferência somente para consulta (devolução já concluída).</span>
+        @endif
+      </div>
+
+      <form method="POST" action="{{ route('cme.returns.check-items', $returnRequest) }}">
+        @csrf
+
+        <div class="overflow-x-auto">
+          <table class="min-w-full text-sm divide-y divide-gray-100">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="p-3 text-left">Peça</th>
+                <th class="p-3 text-center">Qtd. esperada</th>
+                <th class="p-3 text-center">Qtd. conferida</th>
+                <th class="p-3 text-center">Situação</th>
+                <th class="p-3 text-left">Observações</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              @foreach($returnRequest->kitInstance->kit->items as $item)
+                @php
+                  $check = $returnRequest->checkItems->firstWhere('kit_item_id', $item->id);
+                @endphp
+                <tr>
+                  <td class="p-3">{{ $item->nome }}</td>
+                  <td class="p-3 text-center">
+                    {{ $item->quantidade }}
+                    <input type="hidden"
+                          name="items[{{ $item->id }}][expected_qty]"
+                          value="{{ $item->quantidade }}">
+                  </td>
+                  <td class="p-3 text-center">
+                    <input type="number" min="0"
+                          name="items[{{ $item->id }}][returned_qty]"
+                          value="{{ old("items.{$item->id}.returned_qty", $check->returned_qty ?? $item->quantidade) }}"
+                          @disabled(!in_array($returnRequest->status, ['received_by_cme','quarantine','reprocessing']))
+                          class="w-20 rounded-lg border-gray-300 text-sm text-center">
+                  </td>
+                  <td class="p-3 text-center">
+                    @php $status = old("items.{$item->id}.status", $check->status ?? 'ok'); @endphp
+                    <select name="items[{{ $item->id }}][status]"
+                            @disabled(!in_array($returnRequest->status, ['received_by_cme','quarantine','reprocessing']))
+                            class="rounded-lg border-gray-300 text-sm">
+                      <option value="ok"        @selected($status === 'ok')>OK</option>
+                      <option value="faltando"  @selected($status === 'faltando')>Faltando</option>
+                      <option value="danificado"@selected($status === 'danificado')>Danificado</option>
+                    </select>
+                  </td>
+                  <td class="p-3">
+                    <input type="text"
+                          name="items[{{ $item->id }}][observacoes]"
+                          value="{{ old("items.{$item->id}.observacoes", $check->observacoes ?? '') }}"
+                          @disabled(!in_array($returnRequest->status, ['received_by_cme','quarantine','reprocessing']))
+                          class="w-full rounded-lg border-gray-300 text-sm">
+                  </td>
+                </tr>
+              @endforeach
+            </tbody>
+          </table>
+        </div>
+
+        @if(in_array($returnRequest->status, ['received_by_cme','quarantine','reprocessing']))
+          <div class="flex justify-end px-4 py-3 bg-gray-50 border-t border-gray-100">
+            <button type="submit"
+                    class="px-4 py-2 rounded-lg bg-brand-700 hover:bg-brand-800 text-white text-sm font-semibold">
+              Registrar conferência
+            </button>
+          </div>
+        @endif
+      </form>
+    </div>
+  @endif
+
   @if($returnRequest->items && $returnRequest->items->count())
     <div class="bg-white rounded-2xl shadow-soft ring-1 ring-black/5 overflow-hidden">
       <div class="p-4 font-semibold text-brand-800">Itens reportados</div>
@@ -92,7 +173,7 @@
           <tbody class="divide-y divide-gray-100">
             @foreach($returnRequest->items as $it)
               <tr>
-                <td class="p-3">{{ $it->kit_item_id ?? '—' }}</td>
+                <td class="p-3">{{ $it->kitItem->nome ?? '—' }}</td>
                 <td class="p-3">{{ $it->reported_status }}</td>
                 <td class="p-3 text-center">{{ $it->reported_qty }}</td>
                 <td class="p-3">{{ $it->notes }}</td>
