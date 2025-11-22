@@ -55,7 +55,7 @@
 
               <a href="{{ route('kits.index') }}"
                 class="px-3 py-2 rounded-lg border border-white/30 hover:bg-white/10 text-sm">
-                Estoque de Kits
+                Arsenal
               </a>
             @endrole
           </div>

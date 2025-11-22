@@ -61,6 +61,7 @@ class OrderController extends Controller
         $order->load([
             'requester','handler',
             'allocations.kitInstance.kit',
+            'allocations.kitInstance.openReturn',
             'allocations.kitInstance.eventos' => fn($q) => $q->latest(),
         ]);
 

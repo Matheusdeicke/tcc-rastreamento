@@ -23,6 +23,22 @@ class ReturnRequest extends Model
         'meta' => 'array',
     ];
 
+    public const STATUS_RETURN_REQUESTED = 'return_requested';
+    public const STATUS_RECEIVED_BY_CME  = 'received_by_cme';
+    public const STATUS_QUARANTINE       = 'quarantine';
+    public const STATUS_REPROCESSING     = 'reprocessing';
+    public const STATUS_RELEASED         = 'released';
+
+    public function scopeOpen($query)
+    {
+        return $query->whereIn('status', [
+            self::STATUS_RETURN_REQUESTED,
+            self::STATUS_RECEIVED_BY_CME,
+            self::STATUS_QUARANTINE,
+            self::STATUS_REPROCESSING,
+        ]);
+    }
+
     public function kitInstance(): BelongsTo
     {
         return $this->belongsTo(KitInstance::class);
@@ -53,5 +69,4 @@ class ReturnRequest extends Model
     {
         return $this->hasMany(ReturnCheckItem::class, 'return_request_id');
     }
-
 }

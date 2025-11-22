@@ -10,7 +10,7 @@
     @endif
 
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-        <h3 class="text-2xl font-bold text-brand-800">Kits (Catálogo)</h3>
+        <h3 class="text-2xl font-bold text-brand-800">Arsenal de Material</h3>
         <a href="{{ route('kits.create') }}"
            class="inline-flex items-center px-4 py-2 rounded-lg bg-brand-accent hover:bg-brand-accentLight text-brand-900 text-sm font-semibold">
             + Novo kit

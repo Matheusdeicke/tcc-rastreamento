@@ -74,19 +74,32 @@
   @endphp
 
   @php
-  $podeDevolver = $inst && $order->status === 'entregue';
+    // só pode devolver se:
+    // - existe instância
+    // - pedido está entregue
+    // - NÃO há devolução em aberto para essa instância
+    $podeDevolver = $inst
+      && $order->status === 'entregue'
+      && ! $inst->openReturn;
   @endphp
 
-  @if($podeDevolver && auth()->user()->hasRole('enfermagem'))
+  @if($inst && auth()->user()->hasRole('enfermagem'))
     <div class="mt-4 mb-4">
-      <a href="{{ route('returns.create', ['etiqueta' => $inst->etiqueta]) }}"
-        class="inline-flex items-center px-4 py-2 rounded-xl bg-brand-accent text-brand-900 font-semibold hover:bg-brand-accentLight transition"
-        title="Registrar devolução deste kit">
-        Devolver material ({{ $inst->etiqueta }})
-      </a>
+      @if($podeDevolver)
+        <a href="{{ route('returns.create', ['etiqueta' => $inst->etiqueta]) }}"
+          class="inline-flex items-center px-4 py-2 rounded-xl bg-brand-accent text-brand-900 font-semibold hover:bg-brand-accentLight transition"
+          title="Registrar devolução deste kit">
+          Devolver material ({{ $inst->etiqueta }})
+        </a>
+      @else
+        <button type="button"
+          class="inline-flex items-center px-4 py-2 rounded-xl bg-gray-200 text-gray-600 font-semibold cursor-not-allowed"
+          title="Já existe uma devolução em andamento para este kit">
+          Devolução em andamento ({{ $inst->etiqueta }})
+        </button>
+      @endif
     </div>
   @endif
-
 
   @if($inst)
     <div class="bg-white rounded-2xl shadow-soft p-6 ring-1 ring-black/5">

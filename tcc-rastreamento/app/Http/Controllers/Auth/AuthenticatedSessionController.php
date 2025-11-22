@@ -7,14 +7,13 @@ use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\View\View;
 
 class AuthenticatedSessionController extends Controller
 {
     /**
      * Display the login view.
      */
-    public function create(): View
+    public function create()
     {
         return view('auth.login');
     }
@@ -22,24 +21,14 @@ class AuthenticatedSessionController extends Controller
     /**
      * Handle an incoming authentication request.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(LoginRequest $request): RedirectResponse
     {
-        $request->validate([
-            'email' => 'required|string|email',
-            'password' => 'required|string',
-        ]);
-
-        $credentials = $request->only('email', 'password');
-
-        if (!Auth::attempt($credentials, $request->boolean('remember'))) {
-            throw ValidationException::withMessages([
-                'email' => __('auth.failed'),
-            ]);
-        }
+        $request->authenticate();
 
         $request->session()->regenerate();
 
-        $user = Auth::user();
+        $user = $request->user();
+
         if ($user->hasRole('admin')) {
             return redirect()->intended('/cme/kits');
         } elseif ($user->hasRole('cme')) {
@@ -48,9 +37,12 @@ class AuthenticatedSessionController extends Controller
             return redirect()->intended('/orders');
         }
 
-        return redirect()->intended('/');
-    }
+        Auth::logout();
 
+        return redirect('/login')->withErrors([
+            'email' => 'Sua conta não possui um perfil válido. Contate o administrador.',
+        ]);
+    }
 
     /**
      * Destroy an authenticated session.
@@ -60,7 +52,6 @@ class AuthenticatedSessionController extends Controller
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();
-
         $request->session()->regenerateToken();
 
         return redirect('/');

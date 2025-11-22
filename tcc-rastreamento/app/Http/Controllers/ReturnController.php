@@ -40,14 +40,30 @@ class ReturnController extends Controller
         ]);
 
         return DB::transaction(function () use ($request, $data) {
-            $inst = KitInstance::where('etiqueta', $data['etiqueta'])->lockForUpdate()->first();
+            $inst = KitInstance::where('etiqueta', $data['etiqueta'])
+                ->lockForUpdate()
+                ->first();
+
             abort_unless($inst, 404, 'Instância não encontrada pela etiqueta.');
+
+            $hasOpenReturn = ReturnRequest::open()
+                ->where('kit_instance_id', $inst->id)
+                ->exists();
+
+            if ($hasOpenReturn) {
+                return redirect()
+                    ->back()
+                    ->withErrors([
+                        'etiqueta' => 'Já existe uma devolução em andamento para esta instância. Aguarde o processamento pela CME.'
+                    ])
+                    ->withInput();
+            }
 
             $ret = ReturnRequest::create([
                 'kit_instance_id'      => $inst->id,
                 'requested_by_user_id' => $request->user()->id,
                 'requested_at'         => now(),
-                'status'               => 'return_requested',
+                'status'               => ReturnRequest::STATUS_RETURN_REQUESTED,
                 'notes'                => $data['notes'] ?? null,
                 'meta'                 => ['source' => 'web'],
             ]);
@@ -75,7 +91,9 @@ class ReturnController extends Controller
                 $inst->update(['status' => 'retornado']);
             }
 
-            return redirect()->route('returns.show', $ret)->with('ok','Devolução registrada. Aguarde confirmação da CME.');
+            return redirect()
+                ->route('returns.show', $ret)
+                ->with('ok','Devolução registrada. Aguarde confirmação da CME.');
         });
     }
 
