@@ -4,14 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ config('app.name', 'Aplicação') }}</title>
-  @env('local')
-      {{-- Ambiente de desenvolvimento: usa Vite normalmente --}}
-      @vite(['resources/css/app.css', 'resources/js/app.js'])
-  @else
-      {{-- Produção (Railway): usa os arquivos já buildados em public/build --}}
-      <link rel="stylesheet" href="{{ asset('build/assets/app-BON47vEZ.css') }}">
-      <script type="module" src="{{ asset('build/assets/app-CXDpL9bK.js') }}" defer></script>
-  @endenv
+  @vite(['resources/css/app.css', 'resources/js/app.js'])
 
 </head>
 <body class="min-h-screen bg-gradient-to-b from-brand-900 via-brand-800 to-brand-700 text-white">

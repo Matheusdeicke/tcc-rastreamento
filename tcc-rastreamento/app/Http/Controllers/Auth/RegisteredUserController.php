@@ -52,6 +52,7 @@ class RegisteredUserController extends Controller
         
         event(new Registered($user));
 
+        // teste
         // Não loga automaticamente
         // Auth::login($user);
 
