@@ -1,6 +1,8 @@
 <?php
 
 namespace App\Http\Controllers\Auth;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
@@ -40,8 +42,14 @@ class RegisteredUserController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
-        $user->assignRole('enfermagem');
+        $role = Role::firstOrCreate(
+            ['name' => 'enfermagem', 'guard_name' => 'web']
+        );
 
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+            
+        $user->assignRole($role);
+        
         event(new Registered($user));
 
         // Não loga automaticamente
