@@ -12,6 +12,9 @@ use App\Http\Controllers\Cme\KitInstanceController;
 use App\Http\Controllers\Cme\ReturnCmeController;
 use App\Http\Controllers\Cme\KitItemController;
 
+use App\Http\Controllers\Admin\UserManagementController;
+
+
 /*
 |--------------------------------------------------------------------------
 | Rotas de ENFERMAGEM
@@ -95,6 +98,26 @@ Route::prefix('cme')
         Route::post('devolucoes/{returnRequest}/liberar', [ReturnCmeController::class, 'releaseToStock'])->name('cme.returns.release');
         Route::post('devolucoes/{returnRequest}/conferencia-itens', [ReturnCmeController::class, 'checkItems'])
             ->name('cme.returns.check-items');
+    });
+
+/*
+|--------------------------------------------------------------------------
+| Rotas de ADMIN
+|--------------------------------------------------------------------------
+|
+| Gestão do sistema:
+| - Gerenciar usuários (trocar papeis)
+|
+*/
+
+Route::prefix('admin')
+    ->middleware(['auth', 'role:admin'])
+    ->group(function () {
+        Route::get('usuarios', [UserManagementController::class, 'index'])
+            ->name('admin.users.index');
+
+        Route::patch('usuarios/{user}/role', [UserManagementController::class, 'updateRole'])
+            ->name('admin.users.update-role');
     });
 
 /*

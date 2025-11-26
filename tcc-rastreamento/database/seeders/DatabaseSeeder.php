@@ -2,8 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -14,9 +12,9 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            RoleSeeder::class,
-            DemoUsersSeeder::class,
+            RoleSeeder::class,       // 1) cria os papéis
+            AdminUserSeeder::class,  // 2) cria o super admin
+            DemoUsersSeeder::class,  // 3) cria usuários de demo (enfermagem e cme)
         ]);
     }
-
 }

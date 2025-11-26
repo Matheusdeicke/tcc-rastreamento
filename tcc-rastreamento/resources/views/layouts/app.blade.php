@@ -58,6 +58,13 @@
                 Arsenal
               </a>
             @endrole
+
+            @role('admin')
+            <a href="{{ route('admin.users.index') }}"
+              class="px-3 py-2 rounded-lg border border-white/30 hover:bg-white/10 text-sm">
+              Usuários
+            </a>
+            @endrole
           </div>
         @endauth
       </div>
@@ -123,6 +130,12 @@
             class="px-3 py-2 rounded-lg hover:bg-white/10 text-sm">
             Estoque de Kits
           </a>
+        @endrole
+        @role('admin')
+        <a href="{{ route('admin.users.index') }}"
+          class="px-3 py-2 rounded-lg hover:bg-white/10 text-sm">
+          Usuários
+        </a>
         @endrole
         <form method="POST" action="{{ route('logout') }}" class="pt-2">@csrf
           <button class="w-full text-left px-3 py-2 rounded-lg border border-white/30 hover:bg-white/10 text-sm">Sair</button>
